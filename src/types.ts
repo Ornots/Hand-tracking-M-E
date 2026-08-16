@@ -72,6 +72,7 @@ export interface AppSettings {
   activeFilter: CircleFilter;
   activeFendaFilter: FendaFilter;
   activeLaserSubMode: LaserSubMode;
+  isEffectLocked?: boolean;
   
   // Customização de Cores
   colorTheme: ColorPaletteTheme;

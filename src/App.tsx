@@ -4,7 +4,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { GuideModal } from './components/GuideModal';
 import { AppSettings, CircleFilter, FendaFilter, SmoothedHand } from './types';
 import { FILTER_METADATA, FENDA_METADATA } from './utils/effectsEngine';
-import { Settings, HelpCircle, Sparkles } from 'lucide-react';
+import { Settings, HelpCircle, Sparkles, Lock, Unlock } from 'lucide-react';
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -82,8 +82,8 @@ export default function App() {
       className="relative w-screen h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none"
       id="circle-ar-app"
     >
-      {/* 1. Canto Superior Esquerdo: Nome do App em Estética Branca e Roxa */}
-      <div className="absolute top-6 left-6 z-30 flex items-center pointer-events-auto">
+      {/* 1. Canto Superior Esquerdo: Nome do App e Botão de Trava */}
+      <div className="absolute top-6 left-6 z-30 flex items-center pointer-events-auto gap-3">
         <div 
           className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-purple-200/80 shadow-lg shadow-purple-950/20 flex items-center gap-2.5 transition-all hover:bg-white"
           id="app-branding"
@@ -92,9 +92,21 @@ export default function App() {
             <Sparkles className="w-3.5 h-3.5" />
           </div>
           <span className="font-bold text-slate-900 text-xs sm:text-sm tracking-tight">
-            Aura <span className="text-purple-600 font-semibold">• {getModeLabel()}</span>
+            Arcadium <span className="text-purple-600 font-semibold">• {getModeLabel()}</span>
           </span>
         </div>
+
+        <button
+          onClick={() => handleUpdateSettings({ isEffectLocked: !settings.isEffectLocked })}
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md border ${
+            settings.isEffectLocked 
+              ? 'bg-purple-600 text-white border-purple-700 shadow-purple-600/30' 
+              : 'bg-white/90 text-slate-500 border-slate-200 hover:bg-white'
+          }`}
+          title={settings.isEffectLocked ? "Efeito Travado" : "Efeito Livre (Gesto V para trocar)"}
+        >
+          {settings.isEffectLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* 2. Meio do Lado Esquerdo da Tela: APENAS O BOTÃO DE CONFIGURAÇÕES */}

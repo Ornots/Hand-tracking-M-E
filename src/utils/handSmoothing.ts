@@ -132,7 +132,8 @@ export class CircleHandTracker {
     height: number,
     mirror: boolean,
     now: number,
-    currentRenderMode: 'MODO_FENDA' | 'MODO_ESFERAS' | 'MODO_CONEXAO' = 'MODO_ESFERAS'
+    currentRenderMode: 'MODO_FENDA' | 'MODO_ESFERAS' | 'MODO_CONEXAO' | 'MODO_DETECCAO_PURA' = 'MODO_ESFERAS',
+    isEffectLocked: boolean = false
   ): { hands: SmoothedHand[]; arState: ARState } {
     let anyVSignNow = false;
 
@@ -260,14 +261,16 @@ export class CircleHandTracker {
     // 3. Processar mudança de filtro com o gesto de 'V'
     let filterSwitched = false;
     if (anyVSignNow && !this.wasVSignDetected && (now - this.lastFilterSwitchTime > 800)) {
-      if (currentRenderMode === 'MODO_FENDA') {
-        this.currentFendaFilterIndex = (this.currentFendaFilterIndex + 1) % FENDA_FILTERS.length;
-      } else {
-        this.currentFilterIndex = (this.currentFilterIndex + 1) % CIRCLE_FILTERS.length;
+      if (!isEffectLocked) {
+        if (currentRenderMode === 'MODO_FENDA') {
+          this.currentFendaFilterIndex = (this.currentFendaFilterIndex + 1) % FENDA_FILTERS.length;
+        } else {
+          this.currentFilterIndex = (this.currentFilterIndex + 1) % CIRCLE_FILTERS.length;
+        }
+        this.lastFilterSwitchTime = now;
+        filterSwitched = true;
       }
-      this.lastFilterSwitchTime = now;
-      this.wasVSignDetected = true;
-      filterSwitched = true;
+      this.wasVSignDetected = true; // Still register the gesture, but do nothing if locked
     } else if (!anyVSignNow) {
       this.wasVSignDetected = false;
     }

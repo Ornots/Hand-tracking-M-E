@@ -24,7 +24,7 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
 
   sharedLandmarkerPromise = (async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const origin = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') : '';
       let vision = null;
       try {
         vision = await FilesetResolver.forVisionTasks(`${origin}/tasks-vision-wasm`);
@@ -97,7 +97,7 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
 
 function createFallbackHands(): Hands | null {
   try {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') : '';
     const hands = new Hands({
       locateFile: (file) => `${origin}/mediapipe-hands/${file}`,
     });
@@ -369,7 +369,8 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
             height,
             cameraActive ? settings.mirrorCamera : false,
             now,
-            settings.renderMode
+            settings.renderMode,
+            settings.isEffectLocked || false
           );
 
           // 1. Troca de Filtro disparada pelo gesto 'V'
