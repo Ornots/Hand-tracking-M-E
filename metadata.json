@@ -1,0 +1,6 @@
+{
+  "name": "Cyberpunk AR Superpowers Studio",
+  "description": "Minimalist white and purple circular AR experience with hand tracking: make a V sign to cycle filters, or bring index and thumb together to conjure glowing energy rings in real-time.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

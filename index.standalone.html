@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediaPipe AR Holographic Hand Tracking</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #060913;
+      color: #00f3ff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Container Principal da Câmera e Realidade Aumentada */
+    #ar-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+    }
+
+    /* Elemento de Vídeo da Webcam (embaixo) */
+    #webcam-video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scaleX(-1); /* Efeito espelho */
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.75;
+      filter: contrast(1.1) brightness(0.9) saturate(1.2);
+    }
+
+    /* Elemento Canvas Sobreposto (exatamente nas mesmas dimensões) */
+    #ar-canvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Interface HUD Holográfica Superior */
+    #hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      background: rgba(6, 12, 28, 0.85);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px 20px;
+      backdrop-filter: blur(8px);
+      max-width: 380px;
+    }
+
+    .hud-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #00f3ff;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #00f3ff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00f3ff;
+      animation: pulse 1.5s infinite;
+    }
+
+    .hud-metric {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+      font-family: monospace;
+    }
+
+    .hud-metric span {
+      color: #38bdf8;
+      font-weight: bold;
+    }
+
+    /* Botão de Iniciar Câmera */
+    #start-btn {
+      position: absolute;
+      z-index: 30;
+      padding: 16px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #030712;
+      background: #00f3ff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
+      transition: all 0.2s ease;
+    }
+
+    #start-btn:hover {
+      background: #38bdf8;
+      box-shadow: 0 0 35px rgba(0, 243, 255, 0.9);
+      transform: scale(1.05);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+  </style>
+
+  <!-- Importação do MediaPipe Tasks Vision via CDN -->
+  <script type="module">
+    import {
+      FilesetResolver,
+      HandLandmarker
+    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
+
+    // Elementos do DOM
+    const video = document.getElementById("webcam-video");
+    const canvas = document.getElementById("ar-canvas");
+    const ctx = canvas.getContext("2d");
+    const startBtn = document.getElementById("start-btn");
+    const hudStatus = document.getElementById("hud-status");
+    const hudHands = document.getElementById("hud-hands");
+    const hudDistance = document.getElementById("hud-distance");
+
+    let handLandmarker = null;
+    let isVideoRunning = false;
+    let lastVideoTime = -1;
+
+    // Conexões anatômicas das mãos (pares de nós que formam os ossos)
+    const HAND_CONNECTIONS = [
+      // Polegar
+      [0, 1], [1, 2], [2, 3], [3, 4],
+      // Indicador
+      [0, 5], [5, 6], [6, 7], [7, 8],
+      // Médio
+      [0, 9], [9, 10], [10, 11], [11, 12],
+      // Anelar
+      [0, 13], [13, 14], [14, 15], [15, 16],
+      // Mínimo
+      [0, 17], [17, 18], [18, 19], [19, 20],
+      // Base da palma
+      [5, 9], [9, 13], [13, 17], [0, 5], [0, 17]
+    ];
+
+    // =========================================================================
+    // 1. SETUP DO MODELO MEDIAPIPE (HAND LANDMARKER)
+    // =========================================================================
+    async function initializeHandLandmarker() {
+      hudStatus.innerText = "Carregando modelo MediaPipe...";
+      
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      );
+
+      handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numHands: 2 // Detecta até duas mãos simultaneamente
+      });
+
+      hudStatus.innerText = "Modelo pronto! Clique para iniciar.";
+      startBtn.innerText = "INICIAR AR CYBERPUNK";
+      startBtn.disabled = false;
+    }
+
+    // =========================================================================
+    // 2. ATIVAÇÃO DA WEBCAM
+    // =========================================================================
+    async function startCamera() {
+      if (!handLandmarker) return;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user"
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        video.addEventListener("loadeddata", () => {
+          video.play();
+          isVideoRunning = true;
+          startBtn.style.display = "none";
+          hudStatus.innerText = "AR Holográfica Ativa (60 FPS)";
+          
+          // Ajusta as dimensões internas do canvas para a resolução real do vídeo
+          resizeCanvas();
+          window.addEventListener("resize", resizeCanvas);
+
+          // Inicia o Loop Principal de Detecção e Renderização
+          requestAnimationFrame(renderLoop);
+        });
+      } catch (err) {
+        alert("Erro ao acessar a câmera: " + err.message);
+        hudStatus.innerText = "Acesso à câmera negado!";
+      }
+    }
+
+    function resizeCanvas() {
+      canvas.width = video.videoWidth || window.innerWidth;
+      canvas.height = video.videoHeight || window.innerHeight;
+    }
+
+    // =========================================================================
+    // 3. LOOP PRINCIPAL DE PROCESSAMENTO (requestAnimationFrame)
+    // =========================================================================
+    function renderLoop() {
+      if (!isVideoRunning) return;
+
+      // Limpa o canvas a cada frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Executa detecção se houver um novo frame de vídeo disponível
+      if (video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        const startTimeMs = performance.now();
+        const results = handLandmarker.detectForVideo(video, startTimeMs);
+
+        if (results && results.landmarks && results.landmarks.length > 0) {
+          hudHands.innerText = results.landmarks.length + " mão(s) detectada(s)";
+
+          // Itera sobre cada mão detectada (até 2)
+          results.landmarks.forEach((landmarks, handIndex) => {
+            renderCyberpunkHologram(landmarks, handIndex);
+          });
+        } else {
+          hudHands.innerText = "Nenhuma mão detectada";
+          hudDistance.innerText = "Aguardando gesto...";
+        }
+      }
+
+      // Continua o laço de repetição contínuo
+      requestAnimationFrame(renderLoop);
+    }
+
+    // =========================================================================
+    // 4. RENDERIZAÇÃO DO EFEITO HOLOGRÁFICO CYBERPUNK (CANVAS)
+    // =========================================================================
+    function renderCyberpunkHologram(landmarks, handIndex) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Mapeamento das coordenadas normalizadas (0.0 a 1.0) para pixels do canvas
+      // Nota: Como o vídeo tem scaleX(-1) para espelho, invertemos o X para alinhar perfeitamente
+      const pixelLandmarks = landmarks.map(pt => ({
+        x: (1 - pt.x) * w,
+        y: pt.y * h,
+        z: pt.z
+      }));
+
+      // Cores Neon Cyberpunk
+      const neonCyan = "#00f3ff";
+      const neonMagenta = "#ff007f";
+      const neonYellow = "#ffe600";
+
+      // 4.1 Desenha as linhas conectando os nós dos dedos (esqueleto cibernético)
+      ctx.save();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = neonCyan;
+      ctx.shadowColor = neonCyan;
+      ctx.shadowBlur = 12;
+
+      HAND_CONNECTIONS.forEach(([i, j]) => {
+        const p1 = pixelLandmarks[i];
+        const p2 = pixelLandmarks[j];
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // 4.2 Desenha todos os nós da mão com círculos brilhantes
+      pixelLandmarks.forEach((pt, idx) => {
+        // Ignoramos temporariamente 4 e 8 para dar destaque especial depois
+        if (idx === 4 || idx === 8) return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = neonCyan;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 7, 0, 2 * Math.PI);
+        ctx.strokeStyle = neonCyan;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // =======================================================================
+      // 4.3 DESTAQUE VISUAL ESPECÍFICO:
+      // Landmark 4 = Ponta do Polegar | Landmark 8 = Ponta do Indicador
+      // =======================================================================
+      const thumbTip = pixelLandmarks[4];   // Polegar (Landmark 4)
+      const indexTip = pixelLandmarks[8];   // Indicador (Landmark 8)
+
+      const time = performance.now() * 0.003;
+
+      // Desenho do Indicador (Landmark 8) - Mira Holográfica Magenta / Ciano
+      drawHolographicReticle(ctx, indexTip.x, indexTip.y, 14, neonMagenta, time, "INDEX [8]");
+
+      // Desenho do Polegar (Landmark 4) - Mira Holográfica Amarela / Ciano
+      drawHolographicReticle(ctx, thumbTip.x, thumbTip.y, 14, neonYellow, -time, "THUMB [4]");
+
+      // =======================================================================
+      // >>> ÁREA PARA CUSTOMIZAR SUAS FÍSICAS E GATILHOS <<<
+      // Cálculo da distância euclidiana entre a ponta do Polegar e do Indicador
+      // =======================================================================
+      const dx = thumbTip.x - indexTip.x;
+      const dy = thumbTip.y - indexTip.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Exibe a distância em tempo real no HUD
+      hudDistance.innerText = `Distância (4 - 8): ${Math.round(distance)}px`;
+
+      // Linha laser dinâmica conectando o polegar ao indicador
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(thumbTip.x, thumbTip.y);
+      ctx.lineTo(indexTip.x, indexTip.y);
+      ctx.strokeStyle = distance < 45 ? "#ff0055" : "rgba(0, 243, 255, 0.6)";
+      ctx.lineWidth = distance < 45 ? 4 : 1.5;
+      ctx.setLineDash([4, 4]); // Linha tracejada futurista
+      ctx.shadowColor = distance < 45 ? "#ff0055" : neonCyan;
+      ctx.shadowBlur = 14;
+      ctx.stroke();
+      ctx.restore();
+
+      // GATILHO DE PINÇA / INTERAÇÃO (Pinch Trigger)
+      // Se a distância for menor que 45 pixels, os dedos estão se tocando!
+      if (distance < 45) {
+        onPinchGesture(thumbTip, indexTip, distance, handIndex);
+      }
+    }
+
+    // Mira Holográfica Giratória com Anéis de Energia
+    function drawHolographicReticle(ctx, x, y, radius, color, rotation, label) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Círculo central brilhante
+      ctx.beginPath();
+      ctx.arc(0, 0, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+      ctx.fill();
+
+      // Anel rotativo segmentado
+      ctx.rotate(rotation);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 1.5);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+
+      // Marcadores nos eixos
+      ctx.beginPath();
+      ctx.moveTo(-radius - 4, 0); ctx.lineTo(-radius + 2, 0);
+      ctx.moveTo(radius - 2, 0); ctx.lineTo(radius + 4, 0);
+      ctx.moveTo(0, -radius - 4); ctx.lineTo(0, -radius + 2);
+      ctx.moveTo(0, radius - 2); ctx.lineTo(0, radius + 4);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Rótulo de texto flutuante
+      ctx.save();
+      ctx.font = "10px monospace";
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.fillText(label, x + radius + 6, y + 3);
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // >>> ÁREA PARA SUAS FÍSICAS DE INTERAÇÃO OU GATILHOS <<<
+    // Esta função é disparada quando o usuário junta o Polegar (4) e o Indicador (8).
+    // =========================================================================
+    function onPinchGesture(thumb, index, distance, handIndex) {
+      const midX = (thumb.x + index.x) / 2;
+      const midY = (thumb.y + index.y) / 2;
+
+      // 1. Efeito visual de explosão de energia no ponto de contato
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(midX, midY, 18 + Math.sin(performance.now() * 0.02) * 4, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 0, 127, 0.4)";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#ff007f";
+      ctx.shadowBlur = 25;
+      ctx.fill();
+      ctx.stroke();
+
+      // Texto de feedback de gatilho
+      ctx.font = "bold 12px monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.fillText("PINCH TRIGGER!", midX, midY - 26);
+      ctx.restore();
+
+      // INSTRUÇÃO PARA O DESENVOLVEDOR:
+      // Adicione aqui suas físicas: arrastar objetos 3D, desenhar na tela,
+      // disparar sons, instanciar partículas ou interagir com botões AR!
+    }
+
+    // Inicialização ao carregar a página
+    startBtn.addEventListener("click", startCamera);
+    initializeHandLandmarker();
+  </script>
+</head>
+<body>
+  <div id="ar-container">
+    <!-- Feed de Vídeo da Câmera -->
+    <video id="webcam-video" playsinline></video>
+
+    <!-- Canvas Sobreposto para Renderização Holográfica -->
+    <canvas id="ar-canvas"></canvas>
+
+    <!-- Painel HUD Holográfico -->
+    <div id="hud-overlay">
+      <div class="hud-title">CYBER AR HAND VISION</div>
+      <div class="hud-metric">Status: <span id="hud-status">Iniciando MediaPipe...</span></div>
+      <div class="hud-metric">Mãos: <span id="hud-hands">Aguardando...</span></div>
+      <div class="hud-metric">Métrica: <span id="hud-distance">0 px</span></div>
+    </div>
+
+    <!-- Botão de Inicialização -->
+    <button id="start-btn" disabled>CARREGANDO IA...</button>
+  </div>
+</body>
+</html>
