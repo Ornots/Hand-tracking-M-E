@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: './', // Permite que o app funcione em subdiretórios no GitHub Pages
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -694,7 +694,7 @@ export class CircleEffectsEngine {
     }
   }
 
-  // 1. MANDALA RÚNICA DOUTOR ESTRANHO (ULTRA COMPLEXA & HIPER DETALHADA)
+  // 1. MANDALA RÚNICA DOUTOR ESTRANHO (VISUAL DE FILME, ALTA PERFORMANCE)
   private drawDoctorStrangeMandala(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -706,152 +706,56 @@ export class CircleEffectsEngine {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
-    // 0. Halo de luz de fundo e nebulosa mística
-    const gradGlow = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r * 2.4);
-    gradGlow.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
-    gradGlow.addColorStop(0.25, info.secondaryColor);
-    gradGlow.addColorStop(0.55, info.primaryColor);
-    gradGlow.addColorStop(0.85, info.glowColor);
+    // 0. Halo de luz sutil no fundo
+    const gradGlow = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 1.1);
+    gradGlow.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    gradGlow.addColorStop(0.5, info.primaryColor + '40'); // 25% opacidade
     gradGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
     ctx.fillStyle = gradGlow;
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 2.4, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 1.1, 0, Math.PI * 2);
     ctx.fill();
 
-    // 1. Anel Externo Mais Distante com Símbolos Arcanos (Sentido Horário)
-    const outerRingR = r * 1.15;
-    ctx.strokeStyle = info.secondaryColor;
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([4, 4]);
+    // 1. Anel Externo com "Runas" Simuladas (Usando setLineDash para altíssima performance)
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 6;
+    ctx.setLineDash([4, 6, 2, 4, 8, 4, 2, 6]); // Padrão complexo simulando texto
     ctx.beginPath();
-    ctx.arc(cx, cy, outerRingR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.95, -angle * 0.5, -angle * 0.5 + Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.setLineDash([]); // Reset
+    
+    // Borda fina segurando as runas
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.99, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.91, 0, Math.PI * 2);
+    ctx.stroke();
 
-    const outerSymbolsCount = 24;
-    const outerFontSize = Math.max(8, Math.min(16, r * 0.08));
-    ctx.font = `bold ${outerFontSize}px monospace, sans-serif`;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    for (let i = 0; i < outerSymbolsCount; i++) {
-      const symAngle = angle * 0.6 + (i * Math.PI * 2) / outerSymbolsCount;
-      const sx = cx + Math.cos(symAngle) * (outerRingR * 0.94);
-      const sy = cy + Math.sin(symAngle) * (outerRingR * 0.94);
-      const sym = RUNIC_SYMBOLS_OUTER[i % RUNIC_SYMBOLS_OUTER.length];
-
-      ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(symAngle + Math.PI / 2);
-      ctx.shadowColor = info.primaryColor;
-      ctx.shadowBlur = 6;
-      ctx.fillText(sym, 0, 0);
-      ctx.restore();
-    }
-
-    // 2. Anéis Perimetrais Duplos Principais em Branco Puro Iluminado
+    // 2. Anel Principal Branco (Glow forte)
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3.0;
     ctx.shadowColor = info.glowColor;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowBlur = 0; // Reset glow para as formas internas
 
+    // 3. Octagrama Sagrado (2 Quadrados rotacionados a 45 graus)
+    const octRadius = r * 0.85;
     ctx.strokeStyle = info.primaryColor;
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.94, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 3. Faixa de Runas e Kanji Místicos da Linha do Dr. Estranho (Sentido Anti-horário)
-    const glyphCount = 24;
-    const glyphRadius = r * 0.86;
-    const fontSize = Math.max(10, Math.min(20, r * 0.11));
-    ctx.font = `bold ${fontSize}px "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif`;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    for (let i = 0; i < glyphCount; i++) {
-      const glyphAngle = -angle * 0.9 + (i * Math.PI * 2) / glyphCount;
-      const gx = cx + Math.cos(glyphAngle) * glyphRadius;
-      const gy = cy + Math.sin(glyphAngle) * glyphRadius;
-      const glyph = RUNIC_GLYPHS[i % RUNIC_GLYPHS.length];
-
-      ctx.save();
-      ctx.translate(gx, gy);
-      ctx.rotate(glyphAngle + Math.PI / 2);
-      ctx.shadowColor = info.primaryColor;
-      ctx.shadowBlur = 8;
-      ctx.fillText(glyph, 0, 0);
-      ctx.restore();
-    }
-
-    // Marcadores divisores entre as runas
-    for (let i = 0; i < glyphCount; i++) {
-      const dotAngle = -angle * 0.9 + ((i + 0.5) * Math.PI * 2) / glyphCount;
-      const dx = cx + Math.cos(dotAngle) * glyphRadius;
-      const dy = cy + Math.sin(dotAngle) * glyphRadius;
-      ctx.fillStyle = info.secondaryColor;
+    ctx.lineWidth = 2.5;
+    
+    for (let s = 0; s < 2; s++) {
+      const sqAngle = angle + (s * Math.PI) / 4;
       ctx.beginPath();
-      ctx.arc(dx, dy, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 4. Geometria Sagrada Complexa de 4 Quadrados Concéntricos em Rotação
-    const squareCount = 4;
-    for (let s = 0; s < squareCount; s++) {
-      const sqAngle = angle * (1.1 + s * 0.25) + (s * Math.PI) / 8;
-      const sqRadius = r * (0.75 - s * 0.07);
-
-      ctx.strokeStyle = s === 0 ? '#ffffff' : (s % 2 === 1 ? info.secondaryColor : info.primaryColor);
-      ctx.lineWidth = s === 0 ? 2.2 : 1.5;
-      ctx.beginPath();
-
       for (let j = 0; j < 4; j++) {
         const a = sqAngle + (j * Math.PI) / 2;
-        const px = cx + Math.cos(a) * sqRadius;
-        const py = cy + Math.sin(a) * sqRadius;
-        if (j === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      if (s === 0) {
-        for (let j = 0; j < 4; j++) {
-          const a = sqAngle + (j * Math.PI) / 2;
-          const px = cx + Math.cos(a) * sqRadius;
-          const py = cy + Math.sin(a) * sqRadius;
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-
-    // 5. Estrela Hexagonal e Triângulos Sagrados Sobrepostos
-    for (let t = 0; t < 2; t++) {
-      const triAngle = -angle * 1.4 + (t * Math.PI) / 3;
-      const triRadius = r * 0.60;
-
-      ctx.strokeStyle = t === 0 ? '#ffffff' : info.primaryColor;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      for (let j = 0; j < 3; j++) {
-        const a = triAngle + (j * Math.PI * 2) / 3;
-        const px = cx + Math.cos(a) * triRadius;
-        const py = cy + Math.sin(a) * triRadius;
+        const px = cx + Math.cos(a) * octRadius;
+        const py = cy + Math.sin(a) * octRadius;
         if (j === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
@@ -859,56 +763,39 @@ export class CircleEffectsEngine {
       ctx.stroke();
     }
 
-    // 6. Anel de Engrenagem Mística Intermediário
-    const innerTicks = 20;
-    const tickRadius = r * 0.44;
-    for (let i = 0; i < innerTicks; i++) {
-      const a = (i * Math.PI * 2) / innerTicks + angle * 2.2;
-      const tx1 = cx + Math.cos(a) * (tickRadius - 4);
-      const ty1 = cy + Math.sin(a) * (tickRadius - 4);
-      const tx2 = cx + Math.cos(a) * (tickRadius + 4);
-      const ty2 = cy + Math.sin(a) * (tickRadius + 4);
+    // 4. Círculo Interno que tangencia os quadrados
+    const innerCircRadius = octRadius * 0.707; // sen(45) aproxima a tangente
+    ctx.strokeStyle = info.secondaryColor;
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerCircRadius, 0, Math.PI * 2);
+    ctx.stroke();
 
-      ctx.strokeStyle = i % 2 === 0 ? '#ffffff' : info.secondaryColor;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(tx1, ty1);
-      ctx.lineTo(tx2, ty2);
-      ctx.stroke();
-    }
-
-    // 7. Anéis Interiores e Flor Cósmica no Núcleo
+    // 5. Linhas Cruzadas no Núcleo (Estrela / Olho de Agamotto)
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = info.primaryColor;
     ctx.lineWidth = 1.5;
+    const lines = 8;
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.16, 0, Math.PI * 2);
+    for(let i = 0; i < lines; i++) {
+       const a = -angle * 2 + (i * Math.PI * 2) / lines;
+       ctx.moveTo(cx, cy);
+       ctx.lineTo(cx + Math.cos(a) * innerCircRadius, cy + Math.sin(a) * innerCircRadius);
+    }
     ctx.stroke();
 
-    // Pétalas centrais rotativas
-    const petals = 8;
-    for (let p = 0; p < petals; p++) {
-      const pAngle = -angle * 3 + (p * Math.PI * 2) / petals;
-      const px = cx + Math.cos(pAngle) * (r * 0.12);
-      const py = cy + Math.sin(pAngle) * (r * 0.12);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.arc(px, py, r * 0.08, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    // Núcleo Radiante Branco
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 16;
+    // Círculo central do núcleo
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(cx, cy, Math.max(4, r * 0.07), 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Esfera luminosa no meio
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = info.glowColor;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.05, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -964,7 +851,7 @@ export class CircleEffectsEngine {
     ctx.restore();
   }
 
-  // 3. PLASMA CHAKRAM
+  // 3. PLASMA CHAKRAM (REFEITO: Estilo Esfera de Energia Caótica)
   private drawPlasmaChakram(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -976,33 +863,57 @@ export class CircleEffectsEngine {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
-    const blades = 8;
-    for (let b = 0; b < blades; b++) {
-      const bAngle = angle * 3.5 + (b * Math.PI * 2) / blades;
-      ctx.fillStyle = b % 2 === 0 ? '#ffffff' : info.primaryColor;
-      ctx.shadowColor = info.glowColor;
-      ctx.shadowBlur = 12;
+    // Halo principal da esfera de plasma
+    const radGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.5);
+    radGrad.addColorStop(0, '#ffffff');
+    radGrad.addColorStop(0.2, info.secondaryColor);
+    radGrad.addColorStop(0.6, info.primaryColor);
+    radGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = radGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Raios caóticos internos
+    const boltCount = 12;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = info.glowColor;
+    ctx.shadowBlur = 10;
+
+    for (let i = 0; i < boltCount; i++) {
+      ctx.strokeStyle = i % 3 === 0 ? '#ffffff' : (i % 2 === 0 ? info.primaryColor : info.secondaryColor);
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      const tipX = cx + Math.cos(bAngle) * r;
-      const tipY = cy + Math.sin(bAngle) * r;
-      const ctrlX = cx + Math.cos(bAngle + 0.4) * (r * 0.75);
-      const ctrlY = cy + Math.sin(bAngle + 0.4) * (r * 0.75);
-      ctx.quadraticCurveTo(ctrlX, ctrlY, tipX, tipY);
-      ctx.lineTo(cx, cy);
-      ctx.fill();
+
+      const boltAngle = angle * (i % 2 === 0 ? 4 : -4) + (i * Math.PI * 2) / boltCount;
+      const segments = 4;
+      let currX = cx;
+      let currY = cy;
+
+      for (let s = 1; s <= segments; s++) {
+        const t = s / segments;
+        const radiusAtStep = r * t * (0.8 + Math.random() * 0.4); // Caos no raio
+        const angleJitter = (Math.random() - 0.5) * 0.8;
+        currX = cx + Math.cos(boltAngle + angleJitter) * radiusAtStep;
+        currY = cy + Math.sin(boltAngle + angleJitter) * radiusAtStep;
+        ctx.lineTo(currX, currY);
+      }
+      ctx.stroke();
     }
 
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3.0;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.88, 0, Math.PI * 2);
-    ctx.stroke();
+    // Anéis de contenção instáveis (órbitas)
+    for(let o = 0; o < 3; o++) {
+      ctx.strokeStyle = o === 0 ? '#ffffff' : info.primaryColor;
+      ctx.lineWidth = o === 0 ? 2 : 1;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r, r * (0.3 + o * 0.2), angle * 2 + o * Math.PI/3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
 
-  // 4. PORTAL DIMENSIONAL
+  // 4. PORTAL DIMENSIONAL (REFEITO: Círculo Verde/Místico Rúnico Intricado)
   private drawDimensionalPortal(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -1014,18 +925,74 @@ export class CircleEffectsEngine {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
-    for (let ring = 0; ring < 5; ring++) {
-      const ringR = r * (0.3 + ring * 0.18);
-      ctx.strokeStyle = ring % 2 === 0 ? '#ffffff' : info.primaryColor;
-      ctx.lineWidth = ring % 2 === 0 ? 2.5 : 3.5;
-      ctx.shadowColor = info.glowColor;
-      ctx.shadowBlur = 10;
-      ctx.setLineDash([10, 6]);
+    // Fundo esverdeado/luminoso (depende da cor escolhida, mas por padrão usará a cor principal)
+    const portalGlow = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.2);
+    portalGlow.addColorStop(0, info.primaryColor + '60');
+    portalGlow.addColorStop(0.8, info.secondaryColor + '20');
+    portalGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = portalGlow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Linha dentada externa (simulando runas digitais/quadradas)
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const jaggedSegments = 60;
+    for(let i = 0; i <= jaggedSegments; i++) {
+      const a = angle + (i * Math.PI * 2) / jaggedSegments;
+      // Alterna o raio para fazer um padrão quadrado estilo "digital"
+      const offsetR = r * (i % 2 === 0 ? 1.05 : 0.95);
+      const px = cx + Math.cos(a) * offsetR;
+      const py = cy + Math.sin(a) * offsetR;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Anel grosso interno
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Dois quadrados sobrepostos formando octagrama interno
+    for (let s = 0; s < 2; s++) {
+      const sqAngle = -angle * 1.5 + (s * Math.PI) / 4;
+      const sqRadius = r * 0.7;
+
+      ctx.strokeStyle = info.primaryColor;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(cx, cy, ringR, angle * (ring + 1) * (ring % 2 === 0 ? 1 : -1), angle * (ring + 1) * (ring % 2 === 0 ? 1 : -1) + Math.PI * 2);
+
+      for (let j = 0; j < 4; j++) {
+        const a = sqAngle + (j * Math.PI) / 2;
+        const px = cx + Math.cos(a) * sqRadius;
+        const py = cy + Math.sin(a) * sqRadius;
+        if (j === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
       ctx.stroke();
     }
-    ctx.setLineDash([]);
+
+    // Núcleo com runas e pequenos círculos
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for(let i=0; i < 8; i++) {
+      const a = angle * 2 + (i * Math.PI * 2) / 8;
+      ctx.fillStyle = info.secondaryColor;
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(a) * r * 0.4, cy + Math.sin(a) * r * 0.4, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
@@ -1234,6 +1201,7 @@ export class CircleEffectsEngine {
   }
 
   // 9. ASTROLÁBIO CRONOS (NOVA)
+  // 9. ASTROLÁBIO DO TEMPO (CHRONOS) - Estilo Julius Novachrono (Black Clover)
   private drawCelestialChrono(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -1245,56 +1213,133 @@ export class CircleEffectsEngine {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
-    // 12 Marcadores de Horas Cósmicas
-    const hours = 12;
-    for (let h = 0; h < hours; h++) {
-      const ha = (h * Math.PI * 2) / hours + angle * 0.4;
-      const hx1 = cx + Math.cos(ha) * (r * 0.85);
-      const hy1 = cy + Math.sin(ha) * (r * 0.85);
-      const hx2 = cx + Math.cos(ha) * (r * 1.02);
-      const hy2 = cy + Math.sin(ha) * (r * 1.02);
+    // Fundo do mostrador do relógio
+    const clockBg = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
+    clockBg.addColorStop(0, info.primaryColor + '40');
+    clockBg.addColorStop(0.7, info.secondaryColor + '10');
+    clockBg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = clockBg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
 
-      ctx.strokeStyle = h % 3 === 0 ? '#ffffff' : info.primaryColor;
-      ctx.lineWidth = h % 3 === 0 ? 3.0 : 1.8;
-      ctx.shadowColor = info.glowColor;
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.moveTo(hx1, hy1);
-      ctx.lineTo(hx2, hy2);
-      ctx.stroke();
-    }
-
-    // 3 Ponteiros Místicos Rotacionando em Velocidades Relativas
-    const speeds = [1.0, -2.2, 4.0];
-    const lengths = [0.75, 0.55, 0.35];
-    speeds.forEach((spd, idx) => {
-      const pa = angle * spd;
-      const len = r * lengths[idx];
-      ctx.strokeStyle = idx === 0 ? '#ffffff' : (idx === 1 ? info.secondaryColor : info.primaryColor);
-      ctx.lineWidth = 2.4 - idx * 0.4;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(pa) * len, cy + Math.sin(pa) * len);
-      ctx.stroke();
-
-      // Esfera na ponta do ponteiro
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(cx + Math.cos(pa) * len, cy + Math.sin(pa) * len, 4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Anéis perimetrais duplos
-    ctx.strokeStyle = '#ffffff';
+    // Círculos Externos e Engrenagens
+    ctx.strokeStyle = info.primaryColor;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = info.primaryColor;
-    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.95, -angle * 0.5, -angle * 0.5 + Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = info.secondaryColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 12 Números Romanos Cósmicos
+    const romanNumerals = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const fontSize = Math.max(12, r * 0.15);
+    ctx.font = `bold ${fontSize}px "Times New Roman", serif`;
+    ctx.shadowColor = info.glowColor;
+    ctx.shadowBlur = 10;
+
+    for (let h = 0; h < 12; h++) {
+      // 0 = topo (XII), então subtraimos 90 graus (PI/2)
+      const ha = (h * Math.PI * 2) / 12 - Math.PI / 2 + angle * 0.1; // Rotaciona lentamente o mostrador todo
+      const textRadius = r * 0.86;
+      const hx = cx + Math.cos(ha) * textRadius;
+      const hy = cy + Math.sin(ha) * textRadius;
+      
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.rotate(ha + Math.PI / 2); // Mantém o texto apontando para fora/dentro
+      ctx.fillText(romanNumerals[h], 0, 0);
+      ctx.restore();
+    }
+
+    // Marcações de Minutos (60 ticks)
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 1.5;
+    for (let m = 0; m < 60; m++) {
+      if (m % 5 === 0) continue; // Pula a marcação da hora
+      const ma = (m * Math.PI * 2) / 60 - Math.PI / 2 + angle * 0.1;
+      const mx1 = cx + Math.cos(ma) * (r * 0.9);
+      const my1 = cy + Math.sin(ma) * (r * 0.9);
+      const mx2 = cx + Math.cos(ma) * (r * 0.95);
+      const my2 = cy + Math.sin(ma) * (r * 0.95);
+      ctx.beginPath();
+      ctx.moveTo(mx1, my1);
+      ctx.lineTo(mx2, my2);
+      ctx.stroke();
+    }
+
+    // Geometria Sagrada no Centro (Estrela e Círculos)
+    ctx.strokeStyle = info.secondaryColor;
+    ctx.lineWidth = 1.5;
+    for (let t = 0; t < 2; t++) {
+      const triAngle = angle * 1.5 + (t * Math.PI) / 3;
+      const triRadius = r * 0.45;
+      ctx.beginPath();
+      for (let j = 0; j < 3; j++) {
+        const a = triAngle + (j * Math.PI * 2) / 3;
+        const px = cx + Math.cos(a) * triRadius;
+        const py = cy + Math.sin(a) * triRadius;
+        if (j === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    // 3 Ponteiros Místicos Rotacionando em Velocidades Diferentes
+    // Ponteiro das Horas (Lento, Curto, Grosso)
+    const hourAngle = angle * 0.8 - Math.PI/4;
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(cx - Math.cos(hourAngle)*10, cy - Math.sin(hourAngle)*10); // Contrapeso
+    ctx.lineTo(cx + Math.cos(hourAngle) * (r * 0.45), cy + Math.sin(hourAngle) * (r * 0.45));
+    ctx.stroke();
+    
+    // Ponteiro dos Minutos (Médio)
+    const minAngle = angle * 4.5 + Math.PI/2;
+    ctx.strokeStyle = info.secondaryColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - Math.cos(minAngle)*15, cy - Math.sin(minAngle)*15);
+    ctx.lineTo(cx + Math.cos(minAngle) * (r * 0.65), cy + Math.sin(minAngle) * (r * 0.65));
+    ctx.stroke();
+
+    // Ponteiro dos Segundos/Tempo (Mágico, Muito Rápido)
+    const secAngle = -angle * 12; // Rotação contrária e veloz
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.moveTo(cx - Math.cos(secAngle)*20, cy - Math.sin(secAngle)*20);
+    ctx.lineTo(cx + Math.cos(secAngle) * (r * 0.88), cy + Math.sin(secAngle) * (r * 0.88));
+    ctx.stroke();
+    
+    // Esfera/Engrenagem Central do Relógio
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = info.primaryColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.restore();
@@ -1977,7 +2022,7 @@ export class CircleEffectsEngine {
   }
 
   // =========================================================================
-  // SISTEMA DE LASER AVANÇADO E MULTI-INTERATIVO
+  // SISTEMA DE LASER AVANÇADO E MULTI-INTERATIVO (LIMPO E OTIMIZADO)
   // =========================================================================
   private renderInteractiveLaserSystem(
     ctx: CanvasRenderingContext2D,
@@ -1999,33 +2044,30 @@ export class CircleEffectsEngine {
     const middleTip = lms[12];
     const ringTip = lms[16];
     const pinkyTip = lms[20];
-    const wrist = lms[0];
     const palm = hand.palmCenter;
 
     const tips = [thumbTip, indexTip, middleTip, ringTip, pinkyTip];
 
     switch (subMode) {
-      // 1. Cruzamento Pentagonal entre todas as pontas dos dedos
+      // 1. Contorno Sequencial dos Dedos (Mais limpo que o antigo cruzamento)
       case 'LASER_CROSS_FINGERS': {
-        for (let i = 0; i < tips.length; i++) {
-          for (let j = i + 1; j < tips.length; j++) {
-            const pA = tips[i];
-            const pB = tips[j];
-            const dist = Math.hypot(pB.x - pA.x, pB.y - pA.y);
-            if (dist > 250) continue; // Conexão por proximidade interativa
-
-            const mid = { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 };
-            particles.emitBeamEnergy(pA, pB, info.primaryColor, info.secondaryColor, 1);
-            this.drawEnhancedLaserBeam(ctx, pA, pB, mid.x, mid.y, info, scale * 0.85, thickness * 0.85);
-          }
+        // Conecta o polegar ao indicador, indicador ao médio, etc.
+        for (let i = 0; i < tips.length - 1; i++) {
+          const pA = tips[i];
+          const pB = tips[i + 1];
+          const mid = { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 };
+          this.drawEnhancedLaserBeam(ctx, pA, pB, mid.x, mid.y, info, scale * 0.7, thickness * 0.6);
         }
+        // Feixe suave conectando o mindinho de volta ao polegar para fechar o circuito
+        this.drawEnhancedLaserBeam(ctx, tips[4], tips[0], palm.x, palm.y, info, scale * 0.5, thickness * 0.4);
         break;
       }
 
-      // 2. Feixe Direcional de Energia Disparado da Ponta do Indicador
+      // 2. Feixe Direcional de Energia (Raio Limpo)
       case 'LASER_ENERGY_BEAM': {
-        const p1 = lms[6]; // Articulação do Indicador
-        const p2 = indexTip; // Ponta do Indicador
+        // Dispara a partir do centro da palma na direção apontada pela mão (usando a linha do pulso ao dedo médio)
+        const p1 = lms[0]; // Pulso
+        const p2 = lms[9]; // Base do dedo médio
         const dirX = p2.x - p1.x;
         const dirY = p2.y - p1.y;
         const len = Math.hypot(dirX, dirY);
@@ -2033,51 +2075,59 @@ export class CircleEffectsEngine {
 
         const uX = dirX / len;
         const uY = dirY / len;
-        const beamLength = 800; // Alcance do laser
-        const targetX = p2.x + uX * beamLength;
-        const targetY = p2.y + uY * beamLength;
+        const beamLength = 1200; // Alcance do laser saindo da palma
+        
+        // Offset para sair do centro da palma
+        const targetX = palm.x + uX * beamLength;
+        const targetY = palm.y + uY * beamLength;
 
-        // Disparo contínuo com partículas
-        particles.emitBeamTrail(p2.x, p2.y, targetX, targetY, info.primaryColor);
-        particles.emitLaserImpactSparks(p2.x, p2.y, info.primaryColor, info.secondaryColor, 3);
+        // Disparo contínuo com partículas bem controladas (apenas 1 emissão)
+        particles.emitBeamTrail(palm.x, palm.y, targetX, targetY, info.primaryColor);
 
-        this.drawDirectionalLaserBeam(ctx, p2, { x: targetX, y: targetY }, info, scale, thickness);
+        this.drawDirectionalLaserBeam(ctx, palm, { x: targetX, y: targetY }, info, scale, thickness);
         break;
       }
 
-      // 3. Arcos Elétricos de Alta Voltagem Saltando entre os Dedos
+      // 3. Arcos Elétricos de Alta Voltagem (Apenas o visual elétrico puro, sem poluição)
       case 'LASER_ARC_LIGHTNING': {
         for (let i = 0; i < tips.length - 1; i++) {
           const pA = tips[i];
           const pB = tips[i + 1];
           this.drawHighVoltageArc(ctx, pA, pB, info, scale, thickness, jitter);
-          particles.emitBeamEnergy(pA, pB, info.primaryColor, '#ffffff', 2);
         }
-        // Fechar arco do mínimo ao polegar
-        this.drawHighVoltageArc(ctx, tips[4], tips[0], info, scale, thickness, jitter);
+        // Arco central ligando polegar e mindinho cruzando a palma
+        this.drawHighVoltageArc(ctx, tips[4], tips[0], info, scale, thickness * 1.5, jitter * 1.5);
         break;
       }
 
-      // 4. Teia Laser Holográfica em Malha Triangular
+      // 4. Teia Holográfica (Fina e Minimalista)
       case 'LASER_MATRIX_WEB': {
-        // Conecta todas as pontas ao centro da palma e entre si com malha geométrica
+        // Linhas bem finas e translúcidas conectando palma e dedos
+        const webInfo = { ...info, glowColor: 'rgba(0,0,0,0)' }; // Remove o glow extra para não poluir
         tips.forEach((tip) => {
-          this.drawEnhancedLaserBeam(ctx, palm, tip, (palm.x + tip.x) / 2, (palm.y + tip.y) / 2, info, scale * 0.7, thickness * 0.7);
+          this.drawEnhancedLaserBeam(ctx, palm, tip, (palm.x + tip.x) / 2, (palm.y + tip.y) / 2, webInfo, scale * 0.4, thickness * 0.3);
         });
         for (let i = 0; i < tips.length; i++) {
           const pNext = tips[(i + 1) % tips.length];
-          this.drawEnhancedLaserBeam(ctx, tips[i], pNext, (tips[i].x + pNext.x) / 2, (tips[i].y + pNext.y) / 2, info, scale * 0.7, thickness * 0.7);
+          this.drawEnhancedLaserBeam(ctx, tips[i], pNext, (tips[i].x + pNext.x) / 2, (tips[i].y + pNext.y) / 2, webInfo, scale * 0.4, thickness * 0.3);
         }
+        
+        // Núcleo central na palma
+        ctx.fillStyle = info.primaryColor;
+        ctx.beginPath();
+        ctx.arc(palm.x, palm.y, 8 * scale, 0, Math.PI*2);
+        ctx.fill();
         break;
       }
 
-      // Padrão: Indicador + Polegar clássico aprimorado
+      // 5. Padrão: Indicador + Polegar (Pinça de Energia Clássica)
       case 'LASER_DUAL_CONNECT':
       default: {
         if (hand.isThumbIndexActive || hand.isLShape) {
           const cx = hand.thumbIndexCenter.x;
           const cy = hand.thumbIndexCenter.y;
-          particles.emitBeamEnergy(thumbTip, indexTip, info.primaryColor, info.secondaryColor, 4);
+          // Partículas apenas ativadas no momento do feixe
+          if (Math.random() > 0.5) particles.emitBeamEnergy(thumbTip, indexTip, info.primaryColor, info.secondaryColor, 2);
           this.drawEnhancedLaserBeam(ctx, thumbTip, indexTip, cx, cy, info, scale, thickness);
         }
         break;
@@ -2085,7 +2135,7 @@ export class CircleEffectsEngine {
     }
   }
 
-  // Ponte Laser entre as duas mãos
+  // Ponte Laser entre as duas mãos (Conexão Única e Limpa)
   private renderDualHandLaserBridge(
     ctx: CanvasRenderingContext2D,
     h1: SmoothedHand,
@@ -2096,20 +2146,16 @@ export class CircleEffectsEngine {
     thickness: number,
     particles: CircleParticleSystem
   ) {
-    const p1 = h1.indexTip;
-    const p2 = h2.indexTip;
+    const p1 = h1.palmCenter;
+    const p2 = h2.palmCenter;
     const midX = (p1.x + p2.x) / 2;
     const midY = (p1.y + p2.y) / 2;
 
-    particles.emitBeamEnergy(p1, p2, info.primaryColor, info.secondaryColor, 3);
-    this.drawEnhancedLaserBeam(ctx, p1, p2, midX, midY, info, scale * 1.2, thickness * 1.2);
-
-    // Se for modo teia ou cruzamento, conectar também os polegares
-    if (subMode === 'LASER_CROSS_FINGERS' || subMode === 'LASER_MATRIX_WEB') {
-      const t1 = h1.thumbTip;
-      const t2 = h2.thumbTip;
-      this.drawEnhancedLaserBeam(ctx, t1, t2, (t1.x + t2.x) / 2, (t1.y + t2.y) / 2, info, scale * 0.9, thickness * 0.9);
+    // Apenas um feixe robusto e imponente entre as palmas das duas mãos
+    if (Math.random() > 0.7) {
+      particles.emitBeamEnergy(p1, p2, info.primaryColor, info.secondaryColor, 2);
     }
+    this.drawEnhancedLaserBeam(ctx, p1, p2, midX, midY, info, scale * 1.5, thickness * 1.5);
   }
 
   // Feixe Laser Direcional Infinito (Disparador)

@@ -297,8 +297,8 @@ export class CircleHandTracker {
         y: (h1.palmCenter.y + h2.palmCenter.y) / 2,
       };
 
-      // Fusão no modo esferas
-      if (hDist < 220 && !h1.isClosedFist && !h2.isClosedFist && (h1.isThumbIndexActive || h2.isThumbIndexActive)) {
+      // Fusão no modo esferas (aumentado limite de distância e relaxado requisito de pinça)
+      if (hDist < 400 && !h1.isClosedFist && !h2.isClosedFist) {
         dualHand.isMergingShield = true;
       }
 
