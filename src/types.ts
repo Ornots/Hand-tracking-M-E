@@ -67,12 +67,15 @@ export type LaserSubMode =
   | 'LASER_ARC_LIGHTNING' // Arcos de alta voltagem que saltam entre os dedos
   | 'LASER_MATRIX_WEB';   // Teia Laser Holográfica em malha triangular
 
+export type MandalaPosition = 'PINCH' | 'PALM';
+
 export interface AppSettings {
   renderMode: EffectRenderMode;
   activeFilter: CircleFilter;
   activeFendaFilter: FendaFilter;
   activeLaserSubMode: LaserSubMode;
   isEffectLocked?: boolean;
+  mandalaPosition?: MandalaPosition;
   
   // Customização de Cores
   colorTheme: ColorPaletteTheme;

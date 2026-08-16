@@ -251,6 +251,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               )}
 
+              {/* Configuração de Posição da Mandala (Apenas Modo Esferas) */}
+              {settings.renderMode === 'MODO_ESFERAS' && (
+                <div className="mb-4">
+                  <label className="text-xs font-bold uppercase tracking-wider text-purple-900 block mb-2">
+                    Posição da Mandala
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => onUpdateSettings({ mandalaPosition: 'PINCH' })}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                        settings.mandalaPosition === 'PINCH'
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                          : 'bg-white hover:bg-purple-50/80 text-slate-800 border-purple-100'
+                      }`}
+                    >
+                      <span className="font-semibold text-sm mb-1">Modo Pinça</span>
+                      <span className={settings.mandalaPosition === 'PINCH' ? 'text-[10px] text-purple-200' : 'text-[10px] text-slate-500'}>
+                        Ajusta o tamanho (Indicador e Polegar)
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => onUpdateSettings({ mandalaPosition: 'PALM' })}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                        settings.mandalaPosition === 'PALM'
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                          : 'bg-white hover:bg-purple-50/80 text-slate-800 border-purple-100'
+                      }`}
+                    >
+                      <span className="font-semibold text-sm mb-1">Meio da Mão</span>
+                      <span className={settings.mandalaPosition === 'PALM' ? 'text-[10px] text-purple-200' : 'text-[10px] text-slate-500'}>
+                        Tamanho fixo sobre a palma
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 10 Mandalas e Círculos (Modo Esferas e Laser) */}
               {settings.renderMode === 'MODO_ESFERAS' && (
                 <div>

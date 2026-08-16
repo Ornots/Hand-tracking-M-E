@@ -19,6 +19,7 @@ export default function App() {
     activeFilter: 'MYSTIC_MANDALA',
     activeFendaFilter: 'FENDA_PRISMA',
     activeLaserSubMode: 'LASER_CROSS_FINGERS',
+    mandalaPosition: 'PALM',
     colorTheme: 'DEFAULT_PURPLE',
     customPrimaryColor: '#9333ea',
     customSecondaryColor: '#ffffff',
