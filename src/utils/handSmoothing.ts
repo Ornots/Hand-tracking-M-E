@@ -143,6 +143,13 @@ export class CircleHandTracker {
     // Ignorar mãos com confiança muito baixa (Ghost Hands)
     const validDetections = rawDetections.filter(det => det.score >= 0.5);
 
+    // Se nenhuma mão for detectada, limpar instantaneamente o estado para zerar instâncias AR
+    if (validDetections.length === 0) {
+      this.trackedHands.clear();
+      this.smoothedFendaQuad = null;
+      this.lastFendaSeenTime = 0;
+    }
+
     validDetections.forEach((det, idx) => {
       // Normalizar coordenadas brutas
       const rawPoints: Landmark[] = det.landmarks.map((pt) => {
@@ -244,14 +251,11 @@ export class CircleHandTracker {
       this.trackedHands.set(trackIdToUse, { hand, lastSeen: now });
     });
 
-    // 2. Persistência de quadros (Memory Persistence):
-    // Se a IA perder a mão por 1 ou 2 quadros durante um movimento rápido, mantemos a mão viva suavemente
+    // 2. Limpeza rigorosa: remove mãos não pareadas no quadro atual para eliminar rastros/fantasmas
     const currentHands: SmoothedHand[] = [];
-    const MAX_HAND_LIFETIME = 150; // Reduzido para 150ms para evitar ghost hands travadas na tela
 
     this.trackedHands.forEach((state, trackId) => {
-      const age = now - state.lastSeen;
-      if (age < MAX_HAND_LIFETIME) {
+      if (matchedTrackIds.has(trackId)) {
         currentHands.push(state.hand);
       } else {
         this.trackedHands.delete(trackId);

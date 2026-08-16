@@ -75,19 +75,38 @@ export class PhysicsPlayground {
   }
 
   public updateAndRender(ctx: CanvasRenderingContext2D, hands: SmoothedHand[], settings: AppSettings) {
-    // 1. Step the physics engine
+    // 1. Step the physics engine at 60 FPS
     Matter.Engine.update(this.engine, 1000 / 60);
 
-    // 2. Synchronize Hand Bodies
+    // 2. Out-of-bounds protection: Teleport objects falling or flying off screen
+    const allBodies = Matter.Composite.allBodies(this.world);
+    allBodies.forEach(body => {
+      if (!body.isStatic && !this.boundaries.includes(body)) {
+        if (
+          body.position.y > this.canvasHeight + 150 ||
+          body.position.x < -150 ||
+          body.position.x > this.canvasWidth + 150 ||
+          body.position.y < -300
+        ) {
+          Matter.Body.setPosition(body, {
+            x: this.canvasWidth / 2 + (Math.random() * 120 - 60),
+            y: 80,
+          });
+          Matter.Body.setVelocity(body, { x: 0, y: 0 });
+          Matter.Body.setAngularVelocity(body, 0);
+        }
+      }
+    });
+
+    // 3. Synchronize Hand Bodies & Remove Disappeared Hands
     const currentHandIds = new Set(hands.map(h => h.id));
 
-    // Remove bodies for hands that disappeared
+    // Instant cleanup of hands that are no longer detected
     for (const [id, body] of this.handBodies.entries()) {
       if (!currentHandIds.has(id)) {
         Matter.World.remove(this.world, body);
         this.handBodies.delete(id);
         
-        // Remove constraint if exists
         const constraint = this.grabConstraints.get(id);
         if (constraint) {
           Matter.World.remove(this.world, constraint);
@@ -96,81 +115,80 @@ export class PhysicsPlayground {
       }
     }
 
-    // Update or create bodies for current hands
+    // Update or create physics bodies for current hands
     hands.forEach(hand => {
       let handBody = this.handBodies.get(hand.id);
-      
-      // Radius of the hand interaction (approximate based on palm size)
-      const handRadius = 40 * settings.effectScale;
+      const handRadius = Math.max(25, 45 * settings.effectScale);
 
       if (!handBody) {
         handBody = Matter.Bodies.circle(hand.palmCenter.x, hand.palmCenter.y, handRadius, {
-          isStatic: true, // Make it kinematic/static so it can push objects but gravity doesn't affect it
-          friction: 0.5,
-          restitution: 0.2,
+          isStatic: true,
+          friction: 0.6,
+          restitution: 0.4,
           render: { fillStyle: 'transparent' }
         });
         this.handBodies.set(hand.id, handBody);
         Matter.World.add(this.world, handBody);
       } else {
-        // Move the static body to the new palm position
+        // Move kinematic body and assign real physical velocity so striking objects imparts momentum
         Matter.Body.setPosition(handBody, { x: hand.palmCenter.x, y: hand.palmCenter.y });
-        // Optional: Update velocity for better physics interactions (throwing objects)
-        Matter.Body.setVelocity(handBody, { x: hand.velocity.vx * 2, y: hand.velocity.vy * 2 });
+        Matter.Body.setVelocity(handBody, { x: hand.velocity.vx * 2.0, y: hand.velocity.vy * 2.0 });
       }
 
-      // 3. Handle Grabbing (Pinch)
+      // 4. Handle Grabbing (Pinch) with Throw Mechanics
       const isPinching = hand.isThumbIndexActive;
       const constraint = this.grabConstraints.get(hand.id);
 
       if (isPinching && !constraint) {
-        // Try to grab an object near the pinch center
         const pinchPos = { x: hand.thumbIndexCenter.x, y: hand.thumbIndexCenter.y };
-        
-        // Find bodies under the pinch
-        const bodies = Matter.Composite.allBodies(this.world).filter(b => !b.isStatic);
-        
-        for (const body of bodies) {
-          if (Matter.Bounds.contains(body.bounds, pinchPos)) {
-            // Check precise collision
-            const dist = Math.hypot(body.position.x - pinchPos.x, body.position.y - pinchPos.y);
-            // Simple heuristic: if pinch is somewhat inside the body radius
-            // Since we don't know the exact shape easily here, bounding box check is often enough,
-            // or we use Matter.Query.point (more accurate).
-            const isInside = Matter.Query.point([body], pinchPos).length > 0;
-            
-            if (isInside || dist < 50) {
-              // Create a constraint between the hand body and the grabbed object
-              const newConstraint = Matter.Constraint.create({
-                bodyA: handBody,
-                bodyB: body,
-                pointA: { x: pinchPos.x - hand.palmCenter.x, y: pinchPos.y - hand.palmCenter.y },
-                pointB: { x: 0, y: 0 },
-                stiffness: 0.8,
-                damping: 0.1,
-                length: 0,
-                render: { visible: true, strokeStyle: '#9333ea', lineWidth: 3 }
-              });
-              Matter.World.add(this.world, newConstraint);
-              this.grabConstraints.set(hand.id, newConstraint);
-              break; // Grab only one object per hand
-            }
+        const dynamicBodies = Matter.Composite.allBodies(this.world).filter(b => !b.isStatic && !this.handBodies.has(b.id));
+
+        let closestBody: Matter.Body | null = null;
+        let minDistance = 120; // Grab reach radius
+
+        for (const body of dynamicBodies) {
+          const dist = Math.hypot(body.position.x - pinchPos.x, body.position.y - pinchPos.y);
+          const isInside = Matter.Query.point([body], pinchPos).length > 0;
+          if (isInside || dist < minDistance) {
+            minDistance = dist;
+            closestBody = body;
           }
         }
+
+        if (closestBody) {
+          const newConstraint = Matter.Constraint.create({
+            bodyA: handBody,
+            bodyB: closestBody,
+            pointA: { x: pinchPos.x - hand.palmCenter.x, y: pinchPos.y - hand.palmCenter.y },
+            pointB: { x: 0, y: 0 },
+            stiffness: 0.85,
+            damping: 0.1,
+            length: 0,
+            render: { visible: true, strokeStyle: '#c084fc', lineWidth: 3 }
+          });
+          Matter.World.add(this.world, newConstraint);
+          this.grabConstraints.set(hand.id, newConstraint);
+        }
       } else if (!isPinching && constraint) {
-        // Release object
+        // Release object and impart throwing impulse based on hand velocity
+        if (constraint.bodyB) {
+          Matter.Body.setVelocity(constraint.bodyB, {
+            x: hand.velocity.vx * 2.5,
+            y: hand.velocity.vy * 2.5,
+          });
+          Matter.Body.setAngularVelocity(constraint.bodyB, (Math.random() - 0.5) * 0.2);
+        }
         Matter.World.remove(this.world, constraint);
         this.grabConstraints.delete(hand.id);
       } else if (isPinching && constraint) {
-        // Update the constraint anchor point if the hand rotates/moves relative to palm
-        constraint.pointA = { 
-          x: hand.thumbIndexCenter.x - hand.palmCenter.x, 
-          y: hand.thumbIndexCenter.y - hand.palmCenter.y 
+        constraint.pointA = {
+          x: hand.thumbIndexCenter.x - hand.palmCenter.x,
+          y: hand.thumbIndexCenter.y - hand.palmCenter.y,
         };
       }
     });
 
-    // 4. Render everything manually
+    // 5. Render Physics Objects & Cyber Tethers
     this.renderCustom(ctx);
   }
 

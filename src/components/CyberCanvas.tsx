@@ -196,6 +196,7 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
   const latestDetectionsRef = useRef<{ landmarks: Landmark[]; handedness: 'Left' | 'Right'; score: number }[]>([]);
   const isInferringRef = useRef<boolean>(false);
   const lastInferenceTimestampRef = useRef<number>(0);
+  const lastVideoTimeRef = useRef<number>(-1);
   const frameCountRef = useRef<number>(0);
   const lastFpsTimeRef = useRef<number>(performance.now());
   const lastFrameTimeRef = useRef<number>(performance.now());
@@ -324,66 +325,94 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
     return () => window.removeEventListener('SPAWN_OBJECT', handleSpawn);
   }, []);
 
-  // Loop de Visão Computacional Contínuo
+  // Loop de Visão Computacional Sincronizado via rAF com Frame-Throttling
   useEffect(() => {
     let visionRunning = true;
+    let visionFrameId: number | null = null;
+    let lastInferenceTime = 0;
+    const TARGET_INFERENCE_INTERVAL = 25; // max 40 FPS de inferência vision (~25ms) para economizar CPU sem atraso perceptível
 
-    const runVisionInference = async () => {
+    const runVisionInference = async (now: number) => {
       if (!visionRunning) return;
 
       const video = videoRef.current;
       const landmarker = handLandmarkerRef.current;
       const fallbackHands = fallbackHandsRef.current;
 
-      if (cameraActive && video && video.readyState >= 2 && !isInferringRef.current) {
-        const now = performance.now();
-        // Dispara inferência o mais rápido possível (a cada ~15-20ms)
-        if (now - lastInferenceTimestampRef.current >= 15) {
-          lastInferenceTimestampRef.current = now;
+      if (!cameraActive || !video || video.readyState < 2 || video.paused || video.ended) {
+        latestDetectionsRef.current = [];
+        visionFrameId = requestAnimationFrame(runVisionInference);
+        return;
+      }
+
+      // Frame-throttling pulse: só executa nova inferência se o intervalo mínimo passou
+      if (!isInferringRef.current && now - lastInferenceTime >= TARGET_INFERENCE_INTERVAL) {
+        if (video.currentTime !== lastVideoTimeRef.current) {
+          lastVideoTimeRef.current = video.currentTime;
+          lastInferenceTime = now;
           isInferringRef.current = true;
 
           try {
             if (landmarker) {
               const results = landmarker.detectForVideo(video, now);
               if (results && results.landmarks && results.landmarks.length > 0) {
-                latestDetectionsRef.current = results.landmarks.map((lms, idx) => ({
-                  landmarks: lms,
-                  handedness: (results.handedness?.[idx]?.[0]?.categoryName as 'Left' | 'Right') || 'Right',
-                  score: results.handedness?.[idx]?.[0]?.score || 0.95,
-                }));
+                const valid = results.landmarks
+                  .map((lms, idx) => ({
+                    landmarks: lms,
+                    handedness: (results.handedness?.[idx]?.[0]?.categoryName as 'Left' | 'Right') || 'Right',
+                    score: results.handedness?.[idx]?.[0]?.score || 0.95,
+                  }))
+                  .filter((d) => d.score >= 0.5);
+
+                latestDetectionsRef.current = valid;
               } else {
                 latestDetectionsRef.current = [];
               }
             } else if (fallbackHands) {
               await fallbackHands.send({ image: video });
             }
-          } catch {}
-
-          isInferringRef.current = false;
+          } catch (e) {
+            latestDetectionsRef.current = [];
+          } finally {
+            isInferringRef.current = false;
+          }
         }
       }
 
-      setTimeout(runVisionInference, 10);
+      visionFrameId = requestAnimationFrame(runVisionInference);
     };
 
-    runVisionInference();
+    visionFrameId = requestAnimationFrame(runVisionInference);
 
     return () => {
       visionRunning = false;
+      if (visionFrameId !== null) cancelAnimationFrame(visionFrameId);
+      latestDetectionsRef.current = [];
     };
   }, [cameraActive]);
 
-  // Loop de Renderização a 60 FPS
+  // Loop de Renderização com Frame-Throttling a 60 FPS
   useEffect(() => {
     let animActive = true;
+    let lastRenderTime = performance.now();
+    const TARGET_FRAME_INTERVAL = 1000 / 60; // ~16.67ms (60 FPS)
 
     const render = (now: number) => {
       if (!animActive) return;
 
+      const elapsed = now - lastRenderTime;
+
+      // Frame-throttling pulse: impede rendering em taxas ultra-altas (e.g. 120Hz/144Hz) economizando CPU
+      if (elapsed < TARGET_FRAME_INTERVAL - 1.5) {
+        animFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+
+      const deltaTime = Math.min(elapsed, 50); // limita saltos abruptos de delta
+      lastRenderTime = now - (elapsed % TARGET_FRAME_INTERVAL);
+
       const canvas = canvasRef.current;
       const container = containerRef.current;
-      const deltaTime = now - lastFrameTimeRef.current;
-      lastFrameTimeRef.current = now;
 
       if (canvas && container) {
         const width = container.clientWidth || 1280;
