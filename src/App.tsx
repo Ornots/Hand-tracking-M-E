@@ -4,11 +4,12 @@ import { SettingsModal } from './components/SettingsModal';
 import { GuideModal } from './components/GuideModal';
 import { AppSettings, CircleFilter, FendaFilter, SmoothedHand } from './types';
 import { FILTER_METADATA, FENDA_METADATA } from './utils/effectsEngine';
-import { Settings, HelpCircle, Sparkles, Lock, Unlock } from 'lucide-react';
+import { Settings, HelpCircle, Sparkles, Lock, Unlock, Camera, CameraOff } from 'lucide-react';
 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isCameraOn, setIsCameraOn] = useState<boolean>(true);
   const [fps, setFps] = useState<number>(60);
   const [handsCount, setHandsCount] = useState<number>(0);
   const [isConjuring, setIsConjuring] = useState<boolean>(false);
@@ -107,6 +108,18 @@ export default function App() {
         >
           {settings.isEffectLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
         </button>
+
+        <button
+          onClick={() => setIsCameraOn(!isCameraOn)}
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md border ${
+            !isCameraOn 
+              ? 'bg-red-500 text-white border-red-600 shadow-red-500/30' 
+              : 'bg-white/90 text-slate-500 border-slate-200 hover:bg-white'
+          }`}
+          title={isCameraOn ? "Desligar Câmera" : "Ligar Câmera"}
+        >
+          {isCameraOn ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* 2. Meio do Lado Esquerdo da Tela: APENAS O BOTÃO DE CONFIGURAÇÕES */}
@@ -176,6 +189,7 @@ export default function App() {
       <main className="w-full h-full relative" id="ar-main-viewport">
         <CircleARCanvas
           settings={settings}
+          isCameraOn={isCameraOn}
           onFilterSwitched={handleFilterSwitched}
           onFendaFilterSwitched={handleFendaFilterSwitched}
           onHandsDetected={handleHandsDetected}

@@ -72,7 +72,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">Configurações de Aura AR</h2>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">Configurações Arcadium AR</h2>
               <p className="text-xs text-purple-700 font-medium">Personalize modos, cores e mandalas</p>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { Camera, AlertCircle } from 'lucide-react';
 
 interface CircleARCanvasProps {
   settings: AppSettings;
+  isCameraOn: boolean;
   onFilterSwitched?: (filter: CircleFilter) => void;
   onFendaFilterSwitched?: (filter: FendaFilter) => void;
   onHandsDetected?: (hands: SmoothedHand[]) => void;
@@ -24,7 +25,7 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
 
   sharedLandmarkerPromise = (async () => {
     try {
-      const origin = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') : '';
+      const origin = typeof window !== 'undefined' ? window.location.pathname.replace(/\/(index\.html)?$/, '') : '';
       let vision = null;
       try {
         vision = await FilesetResolver.forVisionTasks(`${origin}/tasks-vision-wasm`);
@@ -97,9 +98,8 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
 
 function createFallbackHands(): Hands | null {
   try {
-    const origin = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') : '';
     const hands = new Hands({
-      locateFile: (file) => `${origin}/mediapipe-hands/${file}`,
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
     });
 
     hands.setOptions({
@@ -171,6 +171,7 @@ function generateDemoHands(cx: number, cy: number, time: number): { hand1: Landm
 
 export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
   settings,
+  isCameraOn,
   onFilterSwitched,
   onFendaFilterSwitched,
   onHandsDetected,
@@ -273,10 +274,28 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
     }
   }, [onCameraStatusChange]);
 
-  // Tentar iniciar câmera automaticamente na montagem
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const currentStream = videoRef.current.srcObject as MediaStream;
+      currentStream.getTracks().forEach((t) => t.stop());
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+    onCameraStatusChange?.(false);
+  }, [onCameraStatusChange]);
+
+  // Gerenciar estado da câmera baseado na prop
   useEffect(() => {
-    startCamera();
-  }, [startCamera]);
+    if (isCameraOn) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    
+    return () => {
+      stopCamera();
+    };
+  }, [isCameraOn, startCamera, stopCamera]);
 
   // Loop de Visão Computacional Contínuo
   useEffect(() => {
