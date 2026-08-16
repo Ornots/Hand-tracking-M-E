@@ -1062,7 +1062,7 @@ export class CircleEffectsEngine {
     ctx.restore();
   }
 
-  // 6. LÓTUS RÚNICA SOLAR (NOVA)
+  // 6. LÓTUS RÚNICA SOLAR (NOVA OTIMIZADA)
   private drawSolarRunicLotus(
     ctx: CanvasRenderingContext2D,
     cx: number,
@@ -1073,6 +1073,17 @@ export class CircleEffectsEngine {
   ) {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
+
+    ctx.shadowColor = info.glowColor;
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 1.8;
+
+    // Agrupando os paths por cor para evitar múltiplas mudanças de estado
+    const pathsByColor: Record<string, Path2D> = {
+      '#ffffff': new Path2D(),
+      [info.primaryColor]: new Path2D(),
+      [info.secondaryColor]: new Path2D(),
+    };
 
     // 12 Pétalas em espiral
     const petals = 12;
@@ -1085,13 +1096,8 @@ export class CircleEffectsEngine {
         const px = cx + Math.cos(a) * layerR;
         const py = cy + Math.sin(a) * layerR;
 
-        ctx.strokeStyle = layer === 0 ? '#ffffff' : (p % 2 === 0 ? info.primaryColor : info.secondaryColor);
-        ctx.lineWidth = 1.8;
-        ctx.shadowColor = info.glowColor;
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.ellipse(px, py, layerR * 0.35, layerR * 0.15, a + Math.PI / 4, 0, Math.PI * 2);
-        ctx.stroke();
+        const color = layer === 0 ? '#ffffff' : (p % 2 === 0 ? info.primaryColor : info.secondaryColor);
+        pathsByColor[color].ellipse(px, py, layerR * 0.35, layerR * 0.15, a + Math.PI / 4, 0, Math.PI * 2);
       }
     }
 
@@ -1101,12 +1107,19 @@ export class CircleEffectsEngine {
       const ra = (i * Math.PI * 2) / rays - angle * 2;
       const r1 = r * 0.95;
       const r2 = r * (i % 2 === 0 ? 1.18 : 1.08);
-      ctx.strokeStyle = i % 2 === 0 ? '#ffffff' : info.primaryColor;
-      ctx.lineWidth = 2.0;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(ra) * r1, cy + Math.sin(ra) * r1);
-      ctx.lineTo(cx + Math.cos(ra) * r2, cy + Math.sin(ra) * r2);
-      ctx.stroke();
+      const color = i % 2 === 0 ? '#ffffff' : info.primaryColor;
+      
+      pathsByColor[color].moveTo(cx + Math.cos(ra) * r1, cy + Math.sin(ra) * r1);
+      pathsByColor[color].lineTo(cx + Math.cos(ra) * r2, cy + Math.sin(ra) * r2);
+    }
+
+    // Renderizar os paths de forma agrupada e otimizada
+    for (const [color, path] of Object.entries(pathsByColor)) {
+      if (color === '#ffffff') ctx.lineWidth = 2.0;
+      else ctx.lineWidth = 1.8;
+      
+      ctx.strokeStyle = color;
+      ctx.stroke(path);
     }
 
     // Núcleo

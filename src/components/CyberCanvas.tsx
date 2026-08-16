@@ -67,9 +67,9 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
             },
             runningMode: 'VIDEO',
             numHands: 2,
-            minHandDetectionConfidence: 0.25,
-            minHandPresenceConfidence: 0.25,
-            minTrackingConfidence: 0.25,
+            minHandDetectionConfidence: 0.65,
+            minHandPresenceConfidence: 0.65,
+            minTrackingConfidence: 0.65,
           });
         } catch {
           return await HandLandmarker.createFromOptions(vision, {
@@ -79,9 +79,9 @@ async function getSharedHandLandmarker(): Promise<HandLandmarker | null> {
             },
             runningMode: 'VIDEO',
             numHands: 2,
-            minHandDetectionConfidence: 0.25,
-            minHandPresenceConfidence: 0.25,
-            minTrackingConfidence: 0.25,
+            minHandDetectionConfidence: 0.65,
+            minHandPresenceConfidence: 0.65,
+            minTrackingConfidence: 0.65,
           });
         }
       }
@@ -106,7 +106,7 @@ function createFallbackHands(): Hands | null {
       maxNumHands: 2,
       modelComplexity: 1,
       minDetectionConfidence: 0.25,
-      minTrackingConfidence: 0.25,
+      minTrackingConfidence: 0.65,
     });
 
     return hands;
@@ -220,6 +220,8 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
                   handedness: (results.multiHandedness?.[idx]?.label as 'Left' | 'Right') || 'Right',
                   score: results.multiHandedness?.[idx]?.score || 0.95,
                 }));
+              } else {
+                latestDetectionsRef.current = [];
               }
             });
             fallbackHandsRef.current = fb;
@@ -349,6 +351,8 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
                   handedness: (results.handedness?.[idx]?.[0]?.categoryName as 'Left' | 'Right') || 'Right',
                   score: results.handedness?.[idx]?.[0]?.score || 0.95,
                 }));
+              } else {
+                latestDetectionsRef.current = [];
               }
             } else if (fallbackHands) {
               await fallbackHands.send({ image: video });

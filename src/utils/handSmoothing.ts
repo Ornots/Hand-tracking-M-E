@@ -140,7 +140,10 @@ export class CircleHandTracker {
     // 1. Atualizar ou associar detecções às mãos rastreadas
     const matchedTrackIds = new Set<number>();
 
-    rawDetections.forEach((det, idx) => {
+    // Ignorar mãos com confiança muito baixa (Ghost Hands)
+    const validDetections = rawDetections.filter(det => det.score >= 0.5);
+
+    validDetections.forEach((det, idx) => {
       // Normalizar coordenadas brutas
       const rawPoints: Landmark[] = det.landmarks.map((pt) => {
         let x = pt.x * width;
@@ -241,10 +244,10 @@ export class CircleHandTracker {
       this.trackedHands.set(trackIdToUse, { hand, lastSeen: now });
     });
 
-    // 2. Persistência de quadros (Memory Persistence de 400ms):
+    // 2. Persistência de quadros (Memory Persistence):
     // Se a IA perder a mão por 1 ou 2 quadros durante um movimento rápido, mantemos a mão viva suavemente
     const currentHands: SmoothedHand[] = [];
-    const MAX_HAND_LIFETIME = 450; // ms
+    const MAX_HAND_LIFETIME = 150; // Reduzido para 150ms para evitar ghost hands travadas na tela
 
     this.trackedHands.forEach((state, trackId) => {
       const age = now - state.lastSeen;
