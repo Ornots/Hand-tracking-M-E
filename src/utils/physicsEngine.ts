@@ -1,6 +1,5 @@
 import Matter from 'matter-js';
-import { SmoothedHand } from './handSmoothing';
-import { AppSettings } from '../types';
+import { AppSettings, SmoothedHand } from '../types';
 
 export class PhysicsPlayground {
   private engine: Matter.Engine;
