@@ -69,6 +69,8 @@ export type LaserSubMode =
 
 export type MandalaPosition = 'PINCH' | 'PALM';
 
+export type SkeletonStyle = 'FULL' | 'CLEAN' | 'HIDDEN';
+
 export interface AppSettings {
   renderMode: EffectRenderMode;
   activeFilter: CircleFilter;
@@ -86,7 +88,8 @@ export interface AppSettings {
   // Áudio & Sensibilidade
   audioEnabled: boolean;
   audioVolume: number;           // 0.0 a 1.0
-  showSkeleton: boolean;
+  skeletonStyle: SkeletonStyle;
+  physicsEnabled: boolean;
   mirrorCamera: boolean;
   smoothingFactor: number;       // 0.1 a 0.9
   effectScale: number;           // 0.7 a 1.5

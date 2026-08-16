@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CircleARCanvas } from './components/CyberCanvas';
 import { SettingsModal } from './components/SettingsModal';
 import { GuideModal } from './components/GuideModal';
+import { PhysicsMenu } from './components/PhysicsMenu';
 import { AppSettings, CircleFilter, FendaFilter, SmoothedHand } from './types';
 import { FILTER_METADATA, FENDA_METADATA } from './utils/effectsEngine';
 import { Settings, HelpCircle, Sparkles, Lock, Unlock, Camera, CameraOff } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Settings, HelpCircle, Sparkles, Lock, Unlock, Camera, CameraOff } from 
 export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isPhysicsMenuOpen, setIsPhysicsMenuOpen] = useState<boolean>(false);
   const [isCameraOn, setIsCameraOn] = useState<boolean>(true);
   const [fps, setFps] = useState<number>(60);
   const [handsCount, setHandsCount] = useState<number>(0);
@@ -26,7 +28,8 @@ export default function App() {
     customGlowColor: '#7e22ce',
     audioEnabled: true,
     audioVolume: 0.6,
-    showSkeleton: false,
+    skeletonStyle: 'FULL',
+    physicsEnabled: false,
     mirrorCamera: true,
     smoothingFactor: 0.65,
     effectScale: 1.0,
@@ -197,6 +200,14 @@ export default function App() {
           onFpsUpdate={setFps}
         />
       </main>
+
+      {/* Menu de Física (lado direito, visível apenas no Modo Detecção com a Física ativada) */}
+      <PhysicsMenu 
+        isOpen={isPhysicsMenuOpen} 
+        setIsOpen={setIsPhysicsMenuOpen} 
+        isVisible={settings.renderMode === 'MODO_DETECCAO_PURA' && settings.physicsEnabled} 
+        currentColor={settings.customPrimaryColor}
+      />
 
       {/* 5. Modais em Estética Branca e Roxa */}
       <SettingsModal

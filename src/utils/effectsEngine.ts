@@ -1,5 +1,6 @@
 import { SmoothedHand, CircleFilter, FendaFilter, AppSettings, FilterInfo, DualHandInteraction, FendaQuad, ColorPaletteTheme } from '../types';
 import { CircleParticleSystem } from './particleSystem';
+import { PhysicsPlayground } from './physicsEngine';
 
 // Paletas de Cor Pré-definidas
 export const COLOR_PALETTES: Record<ColorPaletteTheme, { name: string; primary: string; secondary: string; glow: string }> = {
@@ -198,6 +199,11 @@ export class CircleEffectsEngine {
   private rippleAlpha = 0;
   private rippleRadius = 0;
   private rippleText = '';
+  public physicsPlayground: PhysicsPlayground;
+
+  constructor() {
+    this.physicsPlayground = new PhysicsPlayground();
+  }
 
   public triggerFilterSwitch(filterName: string) {
     this.rippleAlpha = 1.0;
@@ -247,6 +253,11 @@ export class CircleEffectsEngine {
     const rotSpeed = (settings.rotationSpeed || 1.0) * 0.025;
     this.rotationAngle += rotSpeed * (deltaTime / 16.6);
 
+    // Initialize Physics Playground if not initialized
+    if (settings.physicsEnabled && (!this.physicsPlayground.isInitialized || width !== (this.physicsPlayground as any).canvasWidth)) {
+      this.physicsPlayground.init(width, height);
+    }
+
     // =========================================================================
     // 0. NOVO MODO: DETECÇÃO PURA DA MÃO (CYBER HUD ANALYTICS & NÓS ESQUELÉTICOS)
     // =========================================================================
@@ -255,12 +266,21 @@ export class CircleEffectsEngine {
       const themeInfo = this.resolveColors(rawFilterInfo, settings);
       
       hands.forEach((hand, handIndex) => {
-        this.renderPureTrackingHUD(ctx, hand, handIndex, themeInfo, settings, this.rotationAngle, width, height);
+        if (settings.skeletonStyle === 'FULL') {
+          this.renderPureTrackingHUD(ctx, hand, handIndex, themeInfo, settings, this.rotationAngle, width, height);
+        } else if (settings.skeletonStyle === 'CLEAN') {
+          this.renderMinimalSkeleton(ctx, hand);
+        }
       });
 
       // Se houver 2 mãos, desenhar telemetria e vetor de distância entre elas
-      if (hands.length >= 2) {
+      if (hands.length >= 2 && settings.skeletonStyle === 'FULL') {
         this.renderDualHandTelemetry(ctx, hands[0], hands[1], themeInfo);
+      }
+
+      // Parquinho de Física
+      if (settings.physicsEnabled) {
+        this.physicsPlayground.updateAndRender(ctx, hands, settings);
       }
 
       // Indicador do gesto V
@@ -284,7 +304,7 @@ export class CircleEffectsEngine {
       const fendaInfo = this.resolveColors(rawFendaInfo, settings);
 
       // Desenhar esqueleto se ativado
-      if (settings.showSkeleton) {
+      if (settings.skeletonStyle !== 'HIDDEN') {
         hands.forEach((hand) => {
           if (hand.smoothedLandmarks.length === 21) {
             this.renderMinimalSkeleton(ctx, hand);
@@ -333,7 +353,7 @@ export class CircleEffectsEngine {
       const jitter = settings.laserArcJitter || 1.0;
 
       // Desenhar esqueleto se ativado
-      if (settings.showSkeleton) {
+      if (settings.skeletonStyle !== 'HIDDEN') {
         hands.forEach((hand) => {
           if (hand.smoothedLandmarks.length === 21) {
             this.renderMinimalSkeleton(ctx, hand);
@@ -401,7 +421,7 @@ export class CircleEffectsEngine {
 
     hands.forEach((hand) => {
       // Esqueleto minimalista
-      if (settings.showSkeleton && hand.smoothedLandmarks.length === 21) {
+      if (settings.skeletonStyle !== 'HIDDEN' && hand.smoothedLandmarks.length === 21) {
         this.renderMinimalSkeleton(ctx, hand);
       }
 

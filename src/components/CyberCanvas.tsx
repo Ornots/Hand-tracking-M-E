@@ -297,6 +297,31 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
     };
   }, [isCameraOn, startCamera, stopCamera]);
 
+  // Adicionar listener para sumonar objetos do parquinho
+  useEffect(() => {
+    const handleSpawn = (e: Event) => {
+      const customEvent = e as CustomEvent<{ type: string; size: number; color: string }>;
+      const { type, size, color } = customEvent.detail;
+      const physics = effectsRef.current.physicsPlayground;
+      const w = canvasRef.current?.width || window.innerWidth;
+      const h = canvasRef.current?.height || window.innerHeight;
+      
+      const spawnX = w / 2 + (Math.random() * 100 - 50);
+      const spawnY = h / 4;
+
+      if (type === 'BOX') {
+        physics.spawnBox(spawnX, spawnY, size, color);
+      } else if (type === 'CIRCLE') {
+        physics.spawnCircle(spawnX, spawnY, size / 2, color);
+      } else if (type === 'POLYGON') {
+        physics.spawnPolygon(spawnX, spawnY, size / 2, Math.floor(Math.random() * 4) + 3, color);
+      }
+    };
+
+    window.addEventListener('SPAWN_OBJECT', handleSpawn);
+    return () => window.removeEventListener('SPAWN_OBJECT', handleSpawn);
+  }, []);
+
   // Loop de Visão Computacional Contínuo
   useEffect(() => {
     let visionRunning = true;

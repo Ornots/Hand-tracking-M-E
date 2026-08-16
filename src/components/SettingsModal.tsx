@@ -214,39 +214,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Opções do Modo Detecção Pura (Quando em MODO_DETECCAO_PURA) */}
               {settings.renderMode === 'MODO_DETECCAO_PURA' && (
-                <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-purple-900">
-                      Estilo do HUD de Detecção
-                    </label>
-                    <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                      Zero Efeitos AR
-                    </span>
+                <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-4">
+                  
+                  {/* Esqueleto & HUD */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                        Estilo do Esqueleto & HUD
+                      </label>
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                        Zero Efeitos AR
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'FULL', title: 'HUD Completo' },
+                        { id: 'CLEAN', title: 'Apenas Ossos' },
+                        { id: 'HIDDEN', title: 'Oculto' },
+                      ].map((s) => {
+                        const isSelected = settings.skeletonStyle === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => onUpdateSettings({ skeletonStyle: s.id as any })}
+                            className={`p-2 rounded-xl text-center border text-xs font-bold transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                : 'bg-white text-slate-700 border-purple-200 hover:bg-purple-100/60'
+                            }`}
+                          >
+                            {s.title}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'NEON_CYBER', title: 'Neon Cyber HUD', desc: 'Retículos & box' },
-                      { id: 'MINIMAL_CLEAN', title: 'Anatômico Clean', desc: 'Linhas nítidas' },
-                      { id: 'HOLO_GLOW', title: 'Holográfico Glow', desc: 'Aura intensa' },
-                    ].map((s) => {
-                      const isSelected = (settings.pureTrackingStyle || 'NEON_CYBER') === s.id;
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => onUpdateSettings({ pureTrackingStyle: s.id as any })}
-                          className={`p-2 rounded-xl text-center border text-xs font-bold transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                              : 'bg-white text-slate-700 border-purple-200 hover:bg-purple-100/60'
-                          }`}
-                        >
-                          {s.title}
-                        </button>
-                      );
-                    })}
+
+                  {/* Parquinho de Física */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-purple-200 shadow-sm">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">Parquinho de Física</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Mão livre com objetos interativos (gravidade, caixa, bola)</p>
+                    </div>
+                    <button
+                      onClick={() => onUpdateSettings({ physicsEnabled: !settings.physicsEnabled })}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        settings.physicsEnabled ? 'bg-purple-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                          settings.physicsEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <p className="text-[11px] text-slate-600">
-                    O modo <strong>Detecção da Mão</strong> renderiza exclusivamente a estrutura anatômica de 21 pontos do MediaPipe, giroscópio de palma, retículos de pontas dos dedos e telemetria de distância entre as duas mãos sem mandalas ou filtros visuais intrusivos.
+                  
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    O modo <strong>Detecção da Mão</strong> renderiza exclusivamente a telemetria pura sem mandalas. Ao ativar o <strong>Parquinho de Física</strong>, um botão para sumonar objetos aparecerá na tela à direita.
                   </p>
                 </div>
               )}
