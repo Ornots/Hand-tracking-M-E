@@ -410,11 +410,13 @@ export class CircleEffectsEngine {
         return;
       }
 
-      // Efeito entre Indicador e Polegar
-      if (hand.isThumbIndexActive && !isMerging) {
-        const cx = hand.thumbIndexCenter.x;
-        const cy = hand.thumbIndexCenter.y;
-        const baseRadius = Math.max(38, Math.min(145, hand.thumbIndexDistance * 0.95)) * settings.effectScale;
+      // 5. Efeito Mandala na Palma da Mão (Visível quando a mão está aberta e não está mesclando escudo)
+      if (!isMerging && !hand.isVSign) {
+        // Usa o centro da palma da mão como origem
+        const cx = hand.palmCenter.x;
+        const cy = hand.palmCenter.y;
+        // Raio base da mandala
+        const baseRadius = 110 * settings.effectScale;
 
         // Modo Esferas / Mandalas (10 opções)
         particles.emitOrbitalSparks(cx, cy, baseRadius, filterInfo.primaryColor, filterInfo.secondaryColor, 2);
