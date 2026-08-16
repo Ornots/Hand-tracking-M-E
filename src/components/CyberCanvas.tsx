@@ -518,10 +518,40 @@ export const CircleARCanvas: React.FC<CircleARCanvasProps> = ({
     };
   }, [cameraActive, settings, onFilterSwitched, onFendaFilterSwitched, onHandsDetected, onFpsUpdate]);
 
+  // Manipulador de clique e toque para explosão interativa de onda de choque
+  const handleInteractiveTap = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    let clientX = 0;
+    let clientY = 0;
+
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ('clientX' in e) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    } else {
+      return;
+    }
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const rawFilter = FILTER_METADATA[settings.activeFilter] || FILTER_METADATA.MYSTIC_MANDALA;
+    particlesRef.current.emitInteractiveImpactShockwave(x, y, rawFilter.primaryColor, rawFilter.secondaryColor);
+
+    if (settings.audioEnabled) {
+      circleAudio.playConjurePulse();
+    }
+  };
+
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-slate-950 select-none flex items-center justify-center"
+      onClick={handleInteractiveTap}
+      onTouchStart={handleInteractiveTap}
+      className="relative w-full h-full overflow-hidden bg-slate-950 select-none flex items-center justify-center cursor-crosshair"
       id="circle-ar-container"
     >
       {/* 1. Vídeo da Webcam em Camada Nativa */}

@@ -218,6 +218,46 @@ export class CircleParticleSystem {
     });
   }
 
+  // 9. Explosão Mística de Impacto Interativa (Onda de Choque Radial & Anéis de Energia)
+  public emitInteractiveImpactShockwave(cx: number, cy: number, primaryColor: string, secondaryColor: string) {
+    // 4 Anéis concêntricos expansivos
+    for (let i = 0; i < 4; i++) {
+      this.particles.push({
+        x: cx,
+        y: cy,
+        vx: 0,
+        vy: 0,
+        size: 4 - i * 0.7,
+        color: i % 2 === 0 ? primaryColor : secondaryColor,
+        alpha: 1.0,
+        decay: 0.022 + i * 0.005,
+        life: 1.0,
+        maxLife: 1.0,
+        radius: 15 + i * 25,
+        type: 'ring',
+      });
+    }
+
+    // Explosão radial de 28 partículas estelares
+    for (let i = 0; i < 28; i++) {
+      const angle = (i * Math.PI * 2) / 28 + (Math.random() * 0.2 - 0.1);
+      const speed = Math.random() * 7.5 + 2.5;
+      this.particles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * 4.5 + 1.8,
+        color: i % 3 === 0 ? '#ffffff' : (i % 2 === 0 ? primaryColor : secondaryColor),
+        alpha: 1.0,
+        decay: 0.028 + Math.random() * 0.02,
+        life: 1.0,
+        maxLife: 1.0,
+        type: 'spark',
+      });
+    }
+  }
+
   public update(width: number, height: number) {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];

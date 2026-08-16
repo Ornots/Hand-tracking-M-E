@@ -35,13 +35,14 @@ export type FendaFilter =
 
 // Paletas de Cor Customizáveis
 export type ColorPaletteTheme = 
-  | 'DEFAULT_PURPLE'   // Púrpura Místico & Branco Astral (Padrão)
-  | 'CYAN_NEON'        // Ciano Elétrico & Branco Glacial
-  | 'SOLAR_GOLD'       // Ouro Solar Arcano & Ambar
-  | 'CRIMSON_RUBY'     // Rubi Escarlate & Chamas Místicas
-  | 'EMERALD_NATURE'   // Esmeralda Astral & Jade Luminoso
-  | 'COSMIC_VIOLET'    // Violeta Noturno Profundo & Prata
-  | 'CUSTOM_RGB';      // Cores Personalizadas pelo Usuário
+  | 'DEFAULT_SIGNATURE' // Cores Padrão (Cores Únicas Exclusivas de cada Mago)
+  | 'DEFAULT_PURPLE'    // Suporte retrocompatível
+  | 'CUSTOM_RGB'        // Cor Personalizada (Muda Tudo via RGB)
+  | 'CYAN_NEON'         // Ciano Elétrico (Aura Global)
+  | 'SOLAR_GOLD'        // Ouro Solar (Aura Global)
+  | 'CRIMSON_RUBY'      // Rubi Escarlate (Aura Global)
+  | 'EMERALD_NATURE'    // Esmeralda Astral (Aura Global)
+  | 'COSMIC_VIOLET';    // Violeta Noturno (Aura Global)
 
 export interface FilterInfo {
   id: string;

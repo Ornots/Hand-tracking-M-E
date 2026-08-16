@@ -27,14 +27,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const circleFilterList = Object.values(FILTER_METADATA);
   const fendaFilterList = Object.values(FENDA_METADATA);
-  const colorThemes: { id: ColorPaletteTheme; name: string; primary: string; secondary: string }[] = [
-    { id: 'DEFAULT_PURPLE', name: 'Púrpura & Branco Astral', primary: '#9333ea', secondary: '#e9d5ff' },
-    { id: 'CYAN_NEON', name: 'Ciano Elétrico & Glacial', primary: '#06b6d4', secondary: '#cffafe' },
-    { id: 'SOLAR_GOLD', name: 'Ouro Solar & Âmbar', primary: '#eab308', secondary: '#fef08a' },
-    { id: 'CRIMSON_RUBY', name: 'Rubi Escarlate & Fogo', primary: '#e11d48', secondary: '#fecdd3' },
-    { id: 'EMERALD_NATURE', name: 'Esmeralda & Jade', primary: '#10b981', secondary: '#d1fae5' },
-    { id: 'COSMIC_VIOLET', name: 'Violeta Noturno', primary: '#7c3aed', secondary: '#ddd6fe' },
-    { id: 'CUSTOM_RGB', name: 'Personalizado (RGB)', primary: settings.customPrimaryColor || '#9333ea', secondary: settings.customSecondaryColor || '#ffffff' },
+  const colorThemes: { id: ColorPaletteTheme; name: string; subtitle: string; primary: string; secondary: string }[] = [
+    { 
+      id: 'DEFAULT_SIGNATURE', 
+      name: 'Cores Padrão (Exclusivas de cada Mago)', 
+      subtitle: 'Cores icônicas de cada herói (Dr. Estranho Dourado, Wanda Rubi, Iron Man Ciano, etc.)', 
+      primary: '#f59e0b', 
+      secondary: '#f43f5e' 
+    },
+    { 
+      id: 'CUSTOM_RGB', 
+      name: 'Cor Personalizada (Muda Tudo via RGB)', 
+      subtitle: 'Controle total de cores para todas as mandalas', 
+      primary: settings.customPrimaryColor || '#9333ea', 
+      secondary: settings.customSecondaryColor || '#ffffff' 
+    },
+    { id: 'CYAN_NEON', name: 'Ciano Elétrico & Glacial', subtitle: 'Tema global ciano elétrico', primary: '#06b6d4', secondary: '#cffafe' },
+    { id: 'SOLAR_GOLD', name: 'Ouro Solar & Âmbar', subtitle: 'Tema global ouro místico', primary: '#eab308', secondary: '#fef08a' },
+    { id: 'CRIMSON_RUBY', name: 'Rubi Escarlate & Fogo', subtitle: 'Tema global vermelho rubi', primary: '#e11d48', secondary: '#fecdd3' },
+    { id: 'EMERALD_NATURE', name: 'Esmeralda & Jade Astral', subtitle: 'Tema global verde esmeralda', primary: '#10b981', secondary: '#d1fae5' },
+    { id: 'COSMIC_VIOLET', name: 'Violeta Noturno Profundo', subtitle: 'Tema global roxo cósmico', primary: '#7c3aed', secondary: '#ddd6fe' },
   ];
 
   const getFilterIcon = (iconName: string) => {
@@ -408,7 +420,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {colorThemes.map((theme) => {
-                    const isSelected = (settings.colorTheme || 'DEFAULT_PURPLE') === theme.id;
+                    const isSelected = (settings.colorTheme || 'DEFAULT_SIGNATURE') === theme.id || 
+                      (theme.id === 'DEFAULT_SIGNATURE' && settings.colorTheme === 'DEFAULT_PURPLE');
                     return (
                       <button
                         key={theme.id}
@@ -434,7 +447,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           <div>
                             <span className="block font-bold text-xs leading-tight">{theme.name}</span>
                             <span className={`text-[10px] ${isSelected ? 'text-purple-100' : 'text-slate-500'}`}>
-                              {theme.id === 'DEFAULT_PURPLE' ? 'Estética Original' : 'Tema Cromático'}
+                              {theme.subtitle}
                             </span>
                           </div>
                         </div>
